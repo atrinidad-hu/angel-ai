@@ -10,4 +10,25 @@ Qué **no** hace nunca: tocar Sentry (resolver, asignar, comentar), tocar tu che
 
 Requiere el conector de Sentry en Claude y `node_modules` instalados en humand-mobile.
 
+## Configuración
+
+Copiá el ejemplo y editá solo lo que quieras cambiar. `config.json` es personal y está ignorado por git, y cada clave pisa a la del ejemplo:
+
+```bash
+cp config.example.json config.json
+python3 scripts/config.py      # muestra la config efectiva y la valida
+```
+
+| Clave | Por defecto | Qué hace |
+| --- | --- | --- |
+| `schedule.time` | `"05:55"` | Hora de la tarea (HH:MM, 24 h) |
+| `schedule.timezone` | `"America/Asuncion"` | Zona horaria IANA |
+| `schedule.weekdays` | `"1-5"` | Días en formato cron (0 = domingo) |
+| `analysis.enabled` | `true` | `false` = solo el digest, sin causa raíz, worktrees, tests ni specs |
+| `analysis.max_issues` | `5` | Issues nuevos analizados por corrida |
+| `sentry.org` / `project` / `region_url` | `humand` / `humand-app` / `us.sentry.io` | Qué consultar |
+
+- **`analysis` y `sentry`** se leen en cada corrida: cambialos y listo.
+- **`schedule`** define la hora de la tarea programada, que vive en Claude y no en este archivo. Si lo cambiás, pedile a Claude en una tarea con las carpetas conectadas: *"Actualizá el horario de mi tarea Sentry morning digest con `python3 angel-ai/sentry-digest/scripts/config.py --cron`"*.
+
 Tarea programada: ver [`PROMPT.md`](PROMPT.md). Instrucciones completas: [`INSTRUCCIONES.md`](INSTRUCCIONES.md).

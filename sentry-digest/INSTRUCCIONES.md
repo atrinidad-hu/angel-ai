@@ -4,8 +4,15 @@ Morning Sentry triage for a Humand mobile engineer: digest + root-cause analysis
 
 The scheduled task reads this file on every run; edits apply from the next run.
 
+## Step 0 — Config
+Run `python3 $ANGEL_AI/sentry-digest/scripts/config.py` and use its JSON output as the effective config for this run (`config.json` overrides `config.example.json`). If it exits with an error, write the report file with that error and how to fix it, and stop.
+- `sentry.org` / `sentry.project` / `sentry.region_url`: what to query.
+- `analysis.enabled`: whether Step 2 runs at all.
+- `analysis.max_issues`: how many NEW issues Step 2 analyzes per run.
+- `schedule` is only used to create/update the scheduled task; ignore it during the run.
+
 ## Context
-- Sentry org "humand" (region https://us.sentry.io), project "humand-app" only. Uses the Sentry connector in Claude.
+- Sentry org, project and region come from the config (`sentry.*`; by default org "humand", region https://us.sentry.io, project "humand-app" only). Uses the Sentry connector in Claude.
 - Paths (inside the task, with the remote-devices `device_bash` tool):
   - `ANGEL_AI` = `$HOME/mnt/angel-ai` (this repo)
   - `HUMAND_MOBILE` = `$HOME/mnt/humand-mobile` (the codebase)
@@ -25,7 +32,9 @@ Mondays: last 72 hours. Tuesday–Friday: last 24 hours.
 Never resolve, assign, ignore or comment on Sentry issues.
 
 ## Step 2 — Deep analysis, NEW issues only (spiking issues stay digest-only)
-Process in priority order (urgent first, then by users affected), up to 5 issues per run; list the rest as "pendientes de análisis". For each new issue:
+**Only if `analysis.enabled` is `true`.** If it is `false`, skip this whole step — no worktrees, branches, tests or specs — and in the report replace the per-issue analysis with the line "Análisis desactivado (`analysis.enabled: false` en sentry-digest/config.json)"; the digest from Step 1 is still complete.
+
+Process in priority order (urgent first, then by users affected), up to `analysis.max_issues` issues per run; list the rest as "pendientes de análisis". For each new issue:
 a. Pull the issue details and latest event (stack trace, breadcrumbs, tags, release, device/OS) from Sentry.
 b. Locate the code in the repo and determine the root cause. State a confidence level (alta/media/baja) and the evidence. If the cause is outside this repo (backend, third-party SDK, native crash with no JS frames, OS-specific), say so and skip the code steps.
 c. Create an isolated worktree: `git -C $HUMAND_MOBILE worktree add .claude/worktrees/sentry-<SHORT_ID> -b sentry/<SHORT_ID>-<short-slug> origin/develop`, then symlink node_modules from the main repo into it (`ln -s ../../../node_modules`). If the branch/worktree already exists from a previous run, reuse it and don't redo finished work.
@@ -40,7 +49,7 @@ e. Write `specs/sentry-<SHORT_ID>/spec.md` in the worktree (commit it too) with:
 Write it to `$ANGEL_AI/sentry-digest/reports/<today YYYY-MM-DD>.md` (overwrite if it exists; the folder is git-ignored — never commit it) AND return it as the final answer of the run:
 - One-line summary (e.g. "2 urgentes, 5 nuevos, 3 con pico, 4 analizados").
 - 🚨 Urgente, with a one-line reason each.
-- Nuevos: per issue — link, users/events, root cause (1–2 lines + confidence), status (fix + tests verde / solo spec / fuera de este repo), branch and worktree path, spec path, and whether it requires human validation.
+- Nuevos: per issue — link, users/events, root cause (1–2 lines + confidence), status (fix + tests verde / solo spec / fuera de este repo), branch and worktree path, spec path, and whether it requires human validation. With analysis disabled: link, users/events, level and culprit only.
 - Con pico: before vs. after numbers, with links.
 - Pendientes de análisis, if any.
 - A reminder that the branches are local only and must be reviewed, pushed and PR'd by a human.

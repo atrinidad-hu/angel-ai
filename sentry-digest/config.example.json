@@ -1,0 +1,16 @@
+{
+  "schedule": {
+    "time": "05:55",
+    "timezone": "America/Asuncion",
+    "weekdays": "1-5"
+  },
+  "analysis": {
+    "enabled": true,
+    "max_issues": 5
+  },
+  "sentry": {
+    "org": "humand",
+    "project": "humand-app",
+    "region_url": "https://us.sentry.io"
+  }
+}

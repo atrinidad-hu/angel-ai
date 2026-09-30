@@ -47,6 +47,14 @@ if [ -f "$HM/CLAUDE.md" ]; then
 else
   bad "no encontré humand-mobile; pasá la ruta: ./setup/check.sh /ruta/a/humand-mobile"
 fi
+echo "5. Config del Sentry digest"
+if cron=$(python3 "$ROOT/sentry-digest/scripts/config.py" --cron); then
+  pass "config válida · horario: $cron"
+  [ -f "$ROOT/sentry-digest/config.json" ] || echo "  ℹ️  sin sentry-digest/config.json: se usan los valores de config.example.json"
+else
+  bad "sentry-digest/config.json tiene errores (ver arriba)"
+fi
+
 [ "$(basename "$ROOT")" = "angel-ai" ] || note "este clon no se llama 'angel-ai': las tareas lo buscan en \$HOME/mnt/angel-ai"
 
 echo

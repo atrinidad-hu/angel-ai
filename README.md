@@ -5,7 +5,7 @@ Tareas programadas de Claude (Cowork) para el día a día en **humand-mobile**. 
 | Herramienta | Qué hace | Cuándo | Salida |
 | --- | --- | --- | --- |
 | [`pr-report/`](pr-report/) | Reporte de los PRs creados o mergeados el día anterior, por tribu y módulo. Las tribus que elijas llevan análisis de riesgo leyendo el diff. | L–V 4:56 AM | `pr-report/reports/AAAA-MM-DD.md` |
-| [`sentry-digest/`](sentry-digest/) | Triage de Sentry (issues nuevos y con pico). Para cada issue nuevo: causa raíz, spec y fix con TDD en un worktree local. | L–V 5:55 AM | `sentry-digest/reports/AAAA-MM-DD.md` + ramas locales `sentry/*` en humand-mobile |
+| [`sentry-digest/`](sentry-digest/) | Triage de Sentry (issues nuevos y con pico). Para cada issue nuevo: causa raíz, spec y fix con TDD en un worktree local (se puede apagar). | L–V 5:55 AM (configurable) | `sentry-digest/reports/AAAA-MM-DD.md` + ramas locales `sentry/*` en humand-mobile |
 
 > **El repo es público.** Los reportes, los datos intermedios y el token quedan en tu copia local y están en `.gitignore`. No los commitees ni los fuerces con `git add -f`.
 
@@ -47,7 +47,15 @@ cp pr-report/config.example.json pr-report/config.json
 
 En `config.json` podés cambiar `detail_tribes`, las tribus que llevan análisis a fondo (por defecto `["Communication"]`), y `utc_offset_hours`. El archivo no se versiona.
 
-### 4. Probar el recolector a mano
+### 4. (Opcional) Configurar el Sentry digest
+
+```bash
+cp sentry-digest/config.example.json sentry-digest/config.json
+```
+
+Podés cambiar la hora (`schedule.time`), los días y la zona horaria, y apagar el análisis con `"analysis": {"enabled": false}` para quedarte solo con el digest. El análisis viene activo por defecto. Detalle en [`sentry-digest/README.md`](sentry-digest/README.md#configuración).
+
+### 5. Probar el recolector a mano
 
 ```bash
 python3 pr-report/scripts/pr_report_fetch.py
@@ -55,7 +63,7 @@ python3 pr-report/scripts/pr_report_fetch.py
 
 Debería terminar con algo como `28 PRs: Communication=16, Tech=6, …` y dejar el JSON en `pr-report/.work/`. Para probar otro día: `--date 2026-09-30`.
 
-### 5. Crear las tareas programadas en Claude
+### 6. Crear las tareas programadas en Claude
 
 1. En la app de escritorio, abrí una tarea nueva con **tu computadora** seleccionada.
 2. Conectá las dos carpetas con **Add folder**: `angel-ai` y `humand-mobile`.
@@ -63,7 +71,7 @@ Debería terminar con algo como `28 PRs: Communication=16, Tech=6, …` y dejar 
 
    > Creá dos tareas programadas que requieran esta computadora y usen las carpetas angel-ai y humand-mobile:
    > - "Reporte diario de PRs": lunes a viernes 4:56 AM, prompt = el contenido de `angel-ai/pr-report/PROMPT.md` debajo de la línea.
-   > - "Sentry morning digest": lunes a viernes 5:55 AM, prompt = el contenido de `angel-ai/sentry-digest/PROMPT.md` debajo de la línea.
+   > - "Sentry morning digest": horario = la salida de `python3 angel-ai/sentry-digest/scripts/config.py --cron`, prompt = el contenido de `angel-ai/sentry-digest/PROMPT.md` debajo de la línea.
 
 4. Para probar sin esperar a mañana, pedile que las corra ahora: *"Corré ahora la tarea Reporte diario de PRs"*.
 
@@ -86,6 +94,7 @@ Las tareas leen `INSTRUCCIONES.md` y los scripts en cada corrida, así que no ha
 
 ## Cambiar el comportamiento
 
+- **Horario o análisis del Sentry digest:** `sentry-digest/config.json` (ver arriba).
 - **Formato o criterio de un reporte:** editá el `INSTRUCCIONES.md` de esa herramienta. Si el cambio le sirve a todo el team, abrí un PR acá.
 - **Clasificación por tribu, señales de riesgo o archivos "core":** `pr-report/scripts/pr_report_fetch.py` (`TRIBES`, `CORE_PATTERNS`). Refleja la tabla de tribus del `CLAUDE.md` de humand-mobile: si esa tabla cambia, actualizala acá también.
 
@@ -109,6 +118,9 @@ angel-ai/
 └── sentry-digest/
     ├── PROMPT.md
     ├── INSTRUCCIONES.md
+    ├── config.example.json  ← horario y análisis; copiá a config.json
+    ├── scripts/
+    │   └── config.py        ← config efectiva + expresión cron
     └── reports/             ← salida, ignorada
 ```
 

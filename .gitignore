@@ -1,0 +1,15 @@
+# Secretos
+.github-token
+.env*
+
+# Salidas de las tareas: tienen información interna de Humand (PRs, issues de Sentry).
+# Nunca se versionan: este repo es público.
+*/reports/*
+!*/reports/.gitkeep
+*/.work/
+
+# Config personal (pisa a config.example.json)
+*/config.json
+
+.DS_Store
+__pycache__/
